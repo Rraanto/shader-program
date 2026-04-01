@@ -74,6 +74,14 @@ Preprocessor::_expand(const std::filesystem::path &file_path, bool verbose) {
   }
 
   this->_expansion_stack.push_back(file_path_canonical);
+  struct StackPopGuard {
+    std::vector<std::filesystem::path> &stack;
+    ~StackPopGuard() {
+      if (!stack.empty()) {
+        stack.pop_back();
+      }
+    }
+  } stack_pop_guard{this->_expansion_stack};
 
   // read file (known to exist) line by line
   std::ifstream file(file_path);
@@ -117,8 +125,6 @@ Preprocessor::_expand(const std::filesystem::path &file_path, bool verbose) {
       source += line + "\n";
     }
   }
-
-  this->_expansion_stack.pop_back(); // pop file from include stack
   return Preprocessor::Output{true, source, error_msg};
 }
 
@@ -150,6 +156,7 @@ Preprocessor::_resolve_include(const std::filesystem::path &include_from,
 Preprocessor::Output
 Preprocessor::process_source(const std::filesystem::path &file_path,
                              bool verbose) {
-  // simply wraps to the private expander
+  // Each compile should start with a clean include-expansion stack.
+  this->_expansion_stack.clear();
   return this->_expand(file_path, verbose);
 }

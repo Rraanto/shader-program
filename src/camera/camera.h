@@ -33,6 +33,15 @@ public:
   float get_zoom();
   float get_scale();
 
+  // Setters for GUI control
+  void set_center(float x, float y);
+  void set_zoom(float zoom);
+  void reset(float x, float y, float zoom = 1.0f);
+
+  // Mouse control
+  void pan(float dx, float dy);                    // Drag to move
+  void zoom_at(float amount, float x, float y);   // Zoom towards point
+
   /*
    * moves with the specified strides
    *

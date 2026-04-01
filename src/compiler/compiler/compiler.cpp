@@ -25,6 +25,11 @@ Compiler::compile(const std::filesystem::path &source_file, GLenum shader_type,
   if (verbose)
     std::cout << "Preprocessed source: \n" << pp.processed_source << std::endl;
 
+  if (glCreateShader == nullptr) {
+    output.error = "OpenGL shader API is unavailable: GL context not initialized";
+    return output;
+  }
+
   // Create output shader
   const std::string label = source_file.string();
   GLuint shader = glCreateShader(shader_type);
