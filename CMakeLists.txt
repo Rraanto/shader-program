@@ -78,11 +78,19 @@ target_include_directories(compiler PUBLIC src)
 target_include_directories(gui PUBLIC src/gui src/compiler src)
 target_link_libraries(gui PRIVATE glad glfw imgui compiler camera)
 
+# App library
+add_library(app STATIC
+  src/app/app.cpp
+)
+target_include_directories(app PUBLIC src)
+target_link_libraries(app PRIVATE glad glfw imgui gui camera compiler)
+target_compile_definitions(app PRIVATE SHADERS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/shaders")
 
-# Main executable 
+# Main executable
 add_executable(main src/main.cpp)
 target_link_libraries(main
   PRIVATE
+  app
   camera
   glfw
   glad
@@ -126,7 +134,8 @@ set(PROJECT_PEDANTIC_WARNINGS
 
 target_compile_options(camera PRIVATE ${PROJECT_PEDANTIC_WARNINGS})
 target_compile_options(compiler PRIVATE ${PROJECT_PEDANTIC_WARNINGS})
-target_compile_options(gui PRIVATE ${PROJECT_PEDANTIC_WARNINGS}) 
+target_compile_options(gui PRIVATE ${PROJECT_PEDANTIC_WARNINGS})
+target_compile_options(app PRIVATE ${PROJECT_PEDANTIC_WARNINGS}) 
 target_compile_definitions(gui PRIVATE SHADERS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/shaders")
 
 target_compile_options(main PRIVATE ${PROJECT_PEDANTIC_WARNINGS})

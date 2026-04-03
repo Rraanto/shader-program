@@ -56,7 +56,7 @@ Gui::Gui() {}
 Gui::~Gui() { shutdown(); }
 
 bool Gui::initialize(GLFWwindow *window) {
-  window_ = window;
+  _window = window;
 
   // Setup ImGui context
   IMGUI_CHECKVERSION();
@@ -82,52 +82,52 @@ bool Gui::initialize(GLFWwindow *window) {
 }
 
 void Gui::shutdown() {
-  if (window_) {
+  if (_window) {
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
-    window_ = nullptr;
+    _window = nullptr;
   }
 }
 
-void Gui::beginFrame() {
+void Gui::begin_frame() {
   ImGui_ImplOpenGL3_NewFrame();
   ImGui_ImplGlfw_NewFrame();
   ImGui::NewFrame();
 }
 
-void Gui::endFrame() {
+void Gui::end_frame() {
   ImGui::Render();
   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
 void Gui::render() {
-  drawEditorPanel();
-  drawStatusBar();
+  _draw_editor_panel();
+  _draw_status_bar();
 }
 
-bool Gui::wantsKeyboardInput() const {
+bool Gui::wants_keyboard_input() const {
   ImGuiIO const &io = ImGui::GetIO();
   return io.WantCaptureKeyboard;
 }
 
-bool Gui::wantsMouseInput() const {
+bool Gui::wants_mouse_input() const {
   ImGuiIO const &io = ImGui::GetIO();
   return io.WantCaptureMouse;
 }
 
-void Gui::setCompiler(Compiler *compiler) { compiler_ = compiler; }
+void Gui::set_compiler(Compiler *compiler) { _compiler = compiler; }
 
-void Gui::setCamera(Camera *camera) { camera_ = camera; }
+void Gui::set_camera(Camera *camera) { _camera = camera; }
 
-void Gui::setShaderPath(const std::string &path) { shaderPath_ = path; }
+void Gui::set_shader_path(const std::string &path) { _shader_path = path; }
 
-std::string Gui::getShaderSource() const { return shaderSource_; }
+std::string Gui::get_shader_source() const { return _shader_source; }
 
-bool Gui::loadShaderFromFile(const std::string &path) {
+bool Gui::load_shader_from_file(const std::string &path) {
   std::ifstream file(path);
   if (!file.is_open()) {
-    compileError_ = "Failed to open shader file: " + path;
+    _compiler_error = "Failed to open shader file: " + path;
     return false;
   }
 
@@ -137,25 +137,25 @@ bool Gui::loadShaderFromFile(const std::string &path) {
 
   std::string content = buffer.str();
   if (content.size() >= SHADER_BUFFER_SIZE - 1) {
-    compileError_ = "Shader file too large (max 64KB)";
+    _compiler_error = "Shader file too large (max 64KB)";
     return false;
   }
 
-  shaderSource_ = content;
-  shaderPath_ = path;
-  editorModified_ = false;
-  compileError_.clear();
+  _shader_source = content;
+  _shader_path = path;
+  _editor_modified = false;
+  _compiler_error.clear();
 
   return true;
 }
 
-bool Gui::hasNewShader() const { return hasNewShader_; }
+bool Gui::has_new_shader() const { return _has_new_shader; }
 
-unsigned int Gui::getCompiledShader() const { return compiledShader_; }
+unsigned int Gui::get_compiled_shader() const { return _compiler_shader; }
 
-void Gui::clearNewShaderFlag() { hasNewShader_ = false; }
+void Gui::clear_new_shader_flag() { _has_new_shader = false; }
 
-void Gui::drawEditorPanel() {
+void Gui::_draw_editor_panel() {
   // Fixed left panel for shader editor
   ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always);
   ImGui::SetNextWindowSize(ImVec2(500, 700), ImGuiCond_FirstUseEver);
@@ -164,7 +164,7 @@ void Gui::drawEditorPanel() {
                ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove);
 
   // Shader file path display
-  if (!shaderPath_.empty()) {
+  if (!_shader_path.empty()) {
     ImGui::Text("Editing: %s", shaderPath_.c_str());
     ImGui::Separator();
   }
@@ -174,23 +174,23 @@ void Gui::drawEditorPanel() {
   ImVec2 availableSize = ImGui::GetContentRegionAvail();
   availableSize.y -= 60; // Reserve space for button and status
 
-  shaderSource_.reserve(SHADER_BUFFER_SIZE - 1);
+  _shader_source.reserve(SHADER_BUFFER_SIZE - 1);
   if (ImGui::InputTextMultiline("##shader_editor", shaderSource_.data(),
                                 shaderSource_.capacity() + 1, availableSize,
                                 ImGuiInputTextFlags_AllowTabInput |
                                     ImGuiInputTextFlags_CallbackResize,
                                 ShaderSourceInputTextCallback,
                                 &shaderSource_)) {
-    editorModified_ = true;
+    _editor_modified = true;
   }
 
   // Compile button
   ImGui::Separator();
   if (ImGui::Button("Compile and Run", ImVec2(120, 30))) {
-    tryCompileShader();
+    _try_compile_shader();
   }
   ImGui::SameLine();
-  if (editorModified_) {
+  if (_editor_modified) {
     ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.0f, 1.0f), "* Modified");
   } else {
     ImGui::Text("Ready");
@@ -199,7 +199,7 @@ void Gui::drawEditorPanel() {
   ImGui::End();
 }
 
-void Gui::drawStatusBar() {
+void Gui::_draw_status_bar() {
   ImGui::SetNextWindowPos(ImVec2(0, 700), ImGuiCond_FirstUseEver);
   ImGui::SetNextWindowSize(ImVec2(500, 100), ImGuiCond_FirstUseEver);
 
@@ -207,7 +207,7 @@ void Gui::drawStatusBar() {
                ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove);
 
   // Camera info
-  if (camera_) {
+  if (_camera) {
     ImGui::Text("Camera: Center (%.6f, %.6f), Zoom: %.6f",
                 static_cast<double>(camera_->get_x()),
                 static_cast<double>(camera_->get_y()),
@@ -215,7 +215,7 @@ void Gui::drawStatusBar() {
   }
 
   // Compilation errors
-  if (!compileError_.empty()) {
+  if (!_compiler_error.empty()) {
     ImGui::Separator();
     ImGui::TextColored(ImVec4(1.0f, 0.3f, 0.3f, 1.0f), "Compilation Error:");
     ImGui::TextWrapped("%s", compileError_.c_str());
@@ -227,43 +227,43 @@ void Gui::drawStatusBar() {
   ImGui::End();
 }
 
-void Gui::tryCompileShader() {
-  if (!compiler_) {
-    compileError_ = "No compiler set";
+void Gui::_try_compile_shader() {
+  if (!_compiler) {
+    _compiler_error = "No compiler set";
     return;
   }
 
-  tempShaderPath_ = buildTempShaderPath(shaderPath_).string();
+  _tmp_shader_path = buildTempShaderPath(_shader_path).string();
 
   // Save editor content to temp file
-  if (!saveEditorToTempFile(tempShaderPath_)) {
+  if (!_save_editor_to_temp_file(_tmp_shader_path)) {
     return;
   }
 
   // Compile the temp file
-  Compiler::CompileOutput result = compiler_->compile(
+  Compiler::CompileOutput result = _compiler->compile(
       tempShaderPath_, 0x8B30, true); // GL_FRAGMENT_SHADER = 0x8B30
 
   if (result.success) {
-    compileError_.clear();
-    hasNewShader_ = true;
-    compiledShader_ = result.shader;
-    editorModified_ = false;
+    _compiler_error.clear();
+    _has_new_shader = true;
+    _compiler_shader = result.shader;
+    _editor_modified = false;
   } else {
-    compileError_ = result.error;
-    hasNewShader_ = false;
+    _compiler_error = result.error;
+    _has_new_shader = false;
   }
 }
 
-bool Gui::saveEditorToTempFile(const std::string &tempPath) {
+bool Gui::_save_editor_to_temp_file(const std::string &tempPath) {
   std::ofstream file(tempPath);
   if (!file.is_open()) {
-    compileError_ = "Failed to create temp file: " + tempPath;
+    _compiler_error = "Failed to create temp file: " + tempPath;
     return false;
   }
 
-  file.write(shaderSource_.data(),
-             static_cast<std::streamsize>(shaderSource_.size()));
+  file.write(_shader_source.data(),
+             static_cast<std::streamsize>(_shader_source.size()));
   file.close();
 
   return true;
