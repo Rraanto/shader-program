@@ -20,3 +20,8 @@ make
 Which will generate the `main` executable that launches the app, and other test executables.
 
 Although I have tried to make pendantic compilation rules with `C++ 17`, with hopes for best portability between compilers/platforms, but have not had the opportunity to test.
+
+# Content
+The starting point of this repository was a pure visualisation tool to visualise shaders locally, but it soon started to be hectic to write entire shader sources in one single file, so I implemented a small compiler/preprocessor tool to be able to use `include` directives, I recently added a very basic GUI to make the tool standalone and am planning on either making the code editor more usable, or resorting to plugging in a third-party editor. 
+
+More thorough documentation is in `docs/`.
